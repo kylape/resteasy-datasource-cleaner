@@ -5,15 +5,15 @@ import java.io.File;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.ScheduleExpression;
+import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 
 import org.jboss.logging.Logger;
 
-@Stateless
+@Singleton
 @Startup
 public class ResteasyDatasourceCleaner {
   
@@ -27,15 +27,13 @@ public class ResteasyDatasourceCleaner {
 
   @Timeout
   public void cleanTempFiles() {
-    log.info("Cleaning temporary datasource files from temp dir");
+    log.debug("Cleaning temporary datasource files from temp dir");
     long now = System.currentTimeMillis();
     for(String tmpName : tempDir.list()) {
-      log.info("Looking at file name : " + tmpName);
       if(tmpName.startsWith(FILE_PREFIX)) {
-        File tmpFile = new File(FILE_PREFIX + File.separator + tmpName);
+        File tmpFile = new File(tempDir + File.separator + tmpName);
         long lastModified = tmpFile.lastModified();
         long elapsedTime = now - lastModified;
-        log.info("Elapsed time: " + elapsedTime + "ms");
         if(elapsedTime > oneDay) {
           tmpFile.delete();
         }
@@ -45,8 +43,6 @@ public class ResteasyDatasourceCleaner {
 
   @PostConstruct
   public void schedule() {
-    Thread.dumpStack();
-    cleanTempFiles();
     String tmpdir = System.getProperty("java.io.tmpdir");
     if(tmpdir == null || tmpdir.equals("")) {
       //Don't schedule if we can't get the temp dir
