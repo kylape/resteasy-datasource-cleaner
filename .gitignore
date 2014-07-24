@@ -1,0 +1,4 @@
+tags
+target/
+**/*.class
+cscope.*
